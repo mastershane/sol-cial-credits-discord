@@ -1,8 +1,8 @@
 import { Pool, QueryResult } from 'pg';
+import { env } from 'process';
 
 const pool = new Pool({
-	connectionString: 'postgresql://postgres:8oatTrip8@localhost:5432/sol-cial-credits',
-	ssl: false
+	connectionString: process.env.DATABASE_URL,
 });
 
 export const query = async (text: string, params: any ) => {
