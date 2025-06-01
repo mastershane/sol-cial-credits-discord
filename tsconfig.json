@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "ESNext",
         "esModuleInterop": true,
-        "target": "es6",
-        "noImplicitAny": true,
+        "target": "ES2022",
+        "strict": true,
         "moduleResolution": "node",
         "sourceMap": true,
         "outDir": "dist",
@@ -13,8 +13,11 @@
                 "node_modules/*"
             ]
         },
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     },
     "include": [
-        "src/**/*"
-    ],
+        "src/**/*",
+        "@types/**/*"
+    ]
 }

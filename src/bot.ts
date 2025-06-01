@@ -1,9 +1,8 @@
-import HTTPS from 'https';
-import {Request, Response} from 'express';
+import { Client, GatewayIntentBits } from 'discord.js';
 import { IMatchBot } from './match-bot';
 
 
-export interface GroupMeRequest {
+export interface DiscordMessage {
   text: string;
   sender_type: 'user' | 'bot',
   source_guid: string,
@@ -15,83 +14,42 @@ export interface Attachment {
   type: string
 }
 
-export interface Mention extends Attachment {
-  type: 'mentions',
-  loci: number[][], // What does this mean??,
-  user_ids: string[],
-}
-
-export interface CustomRequest<T> extends Request {
-  body: T;
-}
-
 export class MessageMatchBotRunner {
-  private _bots: IMatchBot[]
+  private _bots: IMatchBot[];
+  private client: Client;
+
   constructor(bots: IMatchBot[]) {
     this._bots = bots;
-    this.respond = this.respond.bind(this);
+    this.client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+    this.initialize();
   }
 
-  public async respond(req: CustomRequest<GroupMeRequest>, res: Response) {
-    const body = req.body;
+  private initialize() {
+    this.client.on('ready', () => {
+      console.log(`Logged in as ${this.client.user?.tag}!`);
+    });
 
-    // without this check the bot will just trigger itself over and over
-    if(body.sender_type !== "user"){
-      res.writeHead(200);
-      res.end();
-      return;
-    }
+    this.client.on('messageCreate', async (message) => {
+      if (message.author.bot) return;
 
-    console.log(JSON.stringify(body));
+      console.log(`Received message: ${message.content}`);
 
-    if(body.text) {
-      for(const bot of this._bots){
-        const match = await bot.match(body);
-        if(match.isMatch){
-          res.writeHead(200);
-          const message = this.postMessage(match.responseText);
-          res.end(message);
+      for (const bot of this._bots) {
+        const match = await bot.match({
+          text: message.content,
+          sender_type: 'user',
+          source_guid: message.id,
+          user_id: message.author.id,
+          attachments: []
+        });
+
+        if (match.isMatch) {
+          await message.channel.send(match.responseText);
           return;
         }
       }
-    }
-    console.log("don't care");
-    res.writeHead(200);
-    res.end();
-  };
+    });
 
-  private postMessage(botResponse: string) {
-    const options = {
-      hostname: 'api.groupme.com',
-      path: '/v3/bots/post',
-      method: 'POST'
-    };
-
-    const body = {
-      "bot_id" : process.env.BOT_ID,
-      "text" : botResponse
-    };
-
-    console.log('sending ' + botResponse + ' to ' + process.env.BOT_ID);
-
-    if(process.env.ENABLE_GROUPME === "true") {
-      const botReq = HTTPS.request(options, (res) => {
-          if(res.statusCode === 202) {
-            // neat
-          } else {
-            console.log('rejecting bad status code ' + res.statusCode);
-          }
-      });
-
-      botReq.on('error', (err) => {
-        console.log('error posting message '  + JSON.stringify(err));
-      });
-      botReq.on('timeout', (err: any) => {
-        console.log('timeout posting message '  + JSON.stringify(err));
-      });
-      botReq.end(JSON.stringify(body));
-    }
-
-    return botResponse;
+    this.client.login(process.env.DISCORD_CLIENT_TOKEN);
   }
 }

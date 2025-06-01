@@ -1,7 +1,7 @@
-import { query } from "../db"
-import { updateBalance } from "./user-repo";
+import { query } from '../db/index.js';
+import { updateBalance } from './user-repo.js';
 
-export type EventType = 'Add' | 'Remove'
+export type EventType = 'Add' | 'Remove' | 'Name';
 
 export interface IEvent {
 	type: EventType,
@@ -13,8 +13,8 @@ export interface IEvent {
 }
 
 export const saveEvent = async (event: IEvent) => {
-	const sql = 'insert into public.event (type, initiator_id, target_id, value, created_on, text) values ($1, $2, $3, $4, now(), $5)'
-	const result = await query(sql, [event.type, event.initiatorId, event.targetId, event.value, event.text]);
+	const sql = 'insert into event (type, initiator_id, target_id, value, created_on, text) values (?, ?, ?, ?, ?, ?)'
+	const result = await query(sql, [event.type, event.initiatorId, event.targetId, event.value, new Date().toISOString(), event.text]);
 }
 
 export const handleEvent = async (event: IEvent) => {
@@ -25,7 +25,10 @@ export const handleEvent = async (event: IEvent) => {
 		case 'Remove':
 			await updateBalance(event.targetId, -event.value);
 			break;
+		case 'Name':
+			await query('UPDATE discord_user SET name = ? WHERE user_id = ?', [event.text, event.targetId]);	
+			break;
 		default:
 			throw Error(`Event Type ${event.type} not implemented.`)
 	}
-} 
+}
