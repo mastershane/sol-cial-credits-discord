@@ -92,6 +92,9 @@ export class CommandMatchBot implements IMatchBot {
 
 		const runningText = text.trim();
 		if (text.startsWith("+cred")) {
+			if(mentions.includes(senderId)) {
+				return null; // don't allow self-crediting
+			}
 			return {
 				action: 'Add',
 				justification: runningText.substring(5),
@@ -101,6 +104,9 @@ export class CommandMatchBot implements IMatchBot {
 
 
 		if (text.startsWith("-cred")) {
+			if(mentions.includes(senderId)) {
+				return null; // don't allow self-crediting
+			}
 			return {
 				action: 'Remove',
 				justification: runningText.substring(5),
