@@ -21,7 +21,7 @@ export interface IMatchBot {
 export class InfoMatchBot implements IMatchBot {
 	public async match(message: DiscordMessage) {
 		if (message.text.startsWith('!balance')) {
-			const user = await getUser(message.user_id);
+			const user = await getUser(message.user_id, message.user_name);
 			return { isMatch: true, responseText: `Your current balance is ${user.balance}` };
 		}
 
@@ -65,9 +65,11 @@ export class CommandMatchBot implements IMatchBot {
 		}
 
 		// get initaitor user from repo
-		const initiator = await getUser(message.user_id);
+		const initiator = await getUser(message.user_id, message.user_name);
 		const points = Math.round(initiator.balance / 100);
-		command.targets.forEach(async target => {
+		const targetNames: string[] = [];
+		for (const target of command.targets) {
+			const user = await getUser(target, message.mentions.get(target)?.username);
 			const event: IEvent = {
 				type: command.action,
 				initiatorId: message.user_id,
@@ -78,8 +80,8 @@ export class CommandMatchBot implements IMatchBot {
 			}
 			await saveEvent(event);
 			await handleEvent(event);
-		});
-		const targetNames = await Promise.all(command.targets.map(async t => (await getUser(t)).name));
+			targetNames.push(user.name);
+		}
 
 		return { isMatch: true, responseText: ` ${points} credits ${command.action === 'Add' ? 'added to' : 'removed from'} ${targetNames.join(', ')}` };
 	}

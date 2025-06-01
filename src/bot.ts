@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, Collection, GatewayIntentBits, User } from 'discord.js';
 import { IMatchBot } from './match-bot';
 
 
@@ -7,7 +7,8 @@ export interface DiscordMessage {
   sender_type: 'user' | 'bot',
   source_guid: string,
   user_id: string,
-  attachments: Attachment[]
+  user_name?: string;
+  mentions: Collection<string, User>;
 }
 
 export interface Attachment {
@@ -40,7 +41,8 @@ export class MessageMatchBotRunner {
           sender_type: 'user',
           source_guid: message.id,
           user_id: message.author.id,
-          attachments: []
+          user_name: message.author.username,
+          mentions: message.mentions.users,
         });
 
         if (match.isMatch) {

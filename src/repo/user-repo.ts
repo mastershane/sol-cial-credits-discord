@@ -8,12 +8,12 @@ export interface IUser {
 
 const initialBalance = 10000;
 
-export const getUser = async (userId: string) => {
+export const getUser = async (userId: string, name: string | undefined) => {
 	let results = await query('SELECT * FROM discord_user WHERE user_id = ?', [userId]);
 	let row = results.rows[0];
 	if (!row) {
 		// Insert a new user with default values if not found
-		await query('INSERT INTO discord_user (user_id, name, balance) VALUES (?, ?, ?)', [userId, userId, initialBalance]);
+		await query('INSERT INTO discord_user (user_id, name, balance) VALUES (?, ?, ?)', [userId, name ?? userId, initialBalance]);
 		results = await query('SELECT * FROM discord_user WHERE user_id = ?', [userId]);
 		row = results.rows[0];
 	}

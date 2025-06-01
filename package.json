@@ -9,7 +9,8 @@
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "reinit-db": "powershell -Command \"Remove-Item ./src/db/database.sqlite -Force; sqlite3 ./src/db/database.sqlite \\\".read ./src/db/create-script.txt\\\"\""
   },
   "dependencies": {
     "body-parser": "^1.20.2",
